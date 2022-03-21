@@ -1,4 +1,14 @@
 from utils import *
+import mysql.connector
+
+mydb = mysql.connector.connect(
+  host="localhost",
+  user="root",
+  password="",
+  database="olt_management"
+)
+
+mycursor = mydb.cursor()
 
 def connect(HOST, user, password, port):
     tn_connection = telnetlib.Telnet(HOST, port)
@@ -96,7 +106,7 @@ def set_bridge(port, vlan, onu_port_nr, tn_connection):
     commands = [
     "pon-onu-mng {}".format(port),
     "flow mode 1 tag-filter vid-filter untag-filter discard",
-    "flow 1 priority 0 vid 1236".format(vlan),
+    "flow 1 priority 0 vid {}".format(vlan),
     "gemport 1 flow 1",
     "switchport-bind switch_0/1 veip 1",
     "security-mng 998 state enable mode permit ingress-type lan",
@@ -231,9 +241,52 @@ def get_unconf(tn_connection):
     tn_connection.write(str.encode(command))
     response = tn_connection.read_until(b"#").decode('ascii')
     log(response)
-    response = response.splitlines()
-    onus = []
-    for line in response[3:-1]:
-        values = line.split()
-        onus.append([values[0], values[1]])
-    return onus
+    if "32310" not in response:
+        response = response.splitlines()
+        onus = []
+        for line in response[3:-1]:
+            values = line.split()
+            onus.append([values[0], values[1]])
+        return onus
+    else:
+        return []
+
+def authorize(sn, unauth_port, name, address, device_type, vlan, tn_connection):
+
+    mycursor.execute("SELECT name, nr_ports, id FROM device_types WHERE id = {}".format(device_type))
+    dev_type = mycursor.fetchone()
+
+    commands = [
+    "conf t",
+    "interface {}".format(unauth_port[:-2].replace("onu", "olt")),
+    "no onu {}".format(unauth_port.split(":")[1]),
+    "onu {} type {} sn {}".format(unauth_port.split(":")[1], dev_type[0], sn),
+    "exit",
+    "interface {}".format(unauth_port),
+    "name {}".format(name.replace(" ", "_")),
+    "description {}".format(sn),
+    "tcont 1 profile smartolt-1g-up",
+    "gemport 1 unicast tcont 1 dir both",
+    "gemport 1 traffic-limit downstream smartolt-100m-down",
+    "switchport mode hybrid vport 1",
+    "switchport vlan 1236 tag vport 1",
+    "exit"]
+
+
+    commands.append("pon-onu-mng {}".format(unauth_port))
+    commands.append("flow mode 1 tag-filter vid-filter untag-filter discard")
+    commands.append("flow 1 priority 0 vid {}".format(vlan))
+    commands.append("gemport 1 flow 1")
+    commands.append("switchport-bind switch_0/1 veip 1")
+    commands.append("security-mng 998 state enable mode permit ingress-type lan")
+    commands.append("security-mng 999 state enable ingress-type lan protocol ftp telnet ssh snmp tr069")
+
+    for no in range(1,int(dev_type[1])):
+        commands.append("loop-detect ethuni eth_0/{} enable".format(no))
+        commands.append("vlan port eth_0/{} mode tag vlan {}".format(no, vlan))
+        commands.append("dhcp-ip ethuni eth_0/{} from-internet".format(no))
+    send_multiple(commands, tn_connection)
+    sql = "INSERT INTO `clients`(`name`, `address`, `device_type`) VALUES (%s, %s, %s)"
+    val = (name, address, dev_type[2])
+    mycursor.execute(sql, val)
+    mydb.commit()

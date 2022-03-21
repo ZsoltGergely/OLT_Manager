@@ -1,3 +1,4 @@
 logs/
 atom-sftp-sync.json
 *.txt
+__pycache__/
