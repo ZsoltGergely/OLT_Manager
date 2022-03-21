@@ -4,10 +4,11 @@ import mysql.connector
 import string
 import random
 
+
 mydb = mysql.connector.connect(
   host="localhost",
   user="root",
-  password="hIV9k@bQq!bc(CvA",
+  password="",
   database="olt_management"
 )
 mycursor = mydb.cursor()
@@ -54,19 +55,10 @@ def clean_traffic(raw):
     pps_val = raw[bps_ind+3:pps_ind]
     return [bps_val, pps_val]
 
-def get_traffic_telnet(port):
-    global tn
-    tn = telnetlib.Telnet(HOST, 2333)
-
-    tn.read_until(b"Username:")
-    tn.write(user.encode('ascii') + b"\n")
-    if password:
-        tn.read_until(b"Password:")
-        tn.write(password.encode('ascii') + b"\n")
-        tn.read_until(b"#")
+def get_traffic_telnet(port, tn_connection):
     command = "show interface " + port + "\n"
-    tn.write(str.encode(command))
-    response = tn.read_until(b"#").decode('ascii')
+    tn_connection.write(str.encode(command))
+    response = tn_connection.read_until(b"#").decode('ascii')
     response = response.replace(" ","")
     try:
         split = response.split("rate:")
@@ -87,25 +79,15 @@ def get_traffic_telnet(port):
         return[["0","0"],"0",["0","0"],"0",["0","0"],"0",["0","0"],"0",]
 
 
-def get_signal_telnet(port):
+def get_signal_telnet(port, tn_connection):
 
-    global tn
-    tn = telnetlib.Telnet(HOST, 2333)
-
-    tn.read_until(b"Username:")
-    tn.write(user.encode('ascii') + b"\n")
-    if password:
-        tn.read_until(b"Password:")
-        tn.write(password.encode('ascii') + b"\n")
-        tn.read_until(b"#")
     command = "show pon power att " + port + "\n"
-    tn.write(str.encode(command))
-    response = tn.read_until(b"#").decode('ascii')
+    tn_connection.write(str.encode(command))
+    response = tn_connection.read_until(b"#").decode('ascii')
     try:
         split = response.split("Rx")
         value2 = split[1][2:9]
         value1 = split[2][1:8]
-        tn.close()
         return [value1,value2]
     except IndexError:
         return["0.000","0.000"]
@@ -128,19 +110,10 @@ def get_olt_cards(tn_connection):
     return cards
 
 
-def add_static_ip(port, ip, subnet, gateway, dns1, dns2, vlan):
+def add_static_ip(port, ip, subnet, gateway, dns1, dns2, vlan, tn_connection):
 
-    global tn
-    tn = telnetlib.Telnet(HOST, 2333)
-
-    tn.read_until(b"Username:")
-    tn.write(user.encode('ascii') + b"\n")
-    if password:
-        tn.read_until(b"Password:")
-        tn.write(password.encode('ascii') + b"\n")
-        tn.read_until(b"#")
-    tn.write(str.encode("conf t\n"))
-    tn.read_until(b"#")
+    tn_connection.write(str.encode("conf t\n"))
+    tn_connection.read_until(b"#")
     commands = [
     "pon-onu-mng {}".format(port),
     "flow mode 1 tag-filter vid-filter untag-filter discard",
@@ -156,22 +129,12 @@ def add_static_ip(port, ip, subnet, gateway, dns1, dns2, vlan):
     for no in range(1,onu_port_nr):
         commands.append("dhcp-ip ethuni eth_0/{} from-onu".format(no))
     send_multiple(commands)
-    response = tn.read_until(b"#").decode('ascii')
+    response = tn_connection.read_until(b"#").decode('ascii')
     log(response)
 
-def set_bridge(port, vlan, onu_port_nr):
-
-    global tn
-    tn = telnetlib.Telnet(HOST, 2333)
-
-    tn.read_until(b"Username:")
-    tn.write(user.encode('ascii') + b"\n")
-    if password:
-        tn.read_until(b"Password:")
-        tn.write(password.encode('ascii') + b"\n")
-        tn.read_until(b"#")
-    tn.write(str.encode("conf t\n"))
-    tn.read_until(b"#")
+def set_bridge(port, vlan, onu_port_nr, tn_connection):
+    tn_connection.write(str.encode("conf t\n"))
+    tn_connection.read_until(b"#")
 
 
     commands = [
@@ -190,7 +153,7 @@ def set_bridge(port, vlan, onu_port_nr):
         commands.append("vlan port eth_0/{} mode tag vlan {}".format(no, vlan))
         commands.append("dhcp-ip ethuni eth_0/{} from-internet".format(no))
     send_multiple(commands)
-    response = tn.read_until(b"#").decode('ascii')
+    response = tn_connection.read_until(b"#").decode('ascii')
     log(response)
 
 def add_olt(name, ip, telnet_user, telnet_pass, telnet_port, snmp_port):
@@ -302,14 +265,34 @@ def init_olt(tn_connection):
             commands.append("profile tcont {} type 5 fixed 64 assured 64 maximum {}".format("MNGR_"+profile[1]+"_UP", profile[3], profile[3]))
 
 
-    ]
     commands.append("exit")
     commands.append("end")
     send_multiple(commands)
     return [r_comm, rw_comm]
-# add_cards()
-add_olt("kov", "89.46.237.100", "smartoltusr", "Wx87NJ3TGm4Rv2", 2333)
 
+def get_unconf(tn_connection):
+    command = "show gpon onu uncfg\n"
+    tn_connection.write(str.encode(command))
+    response = tn_connection.read_until(b"#").decode('ascii')
+    log(response)
+    response = response.splitlines()
+    onus = []
+    for line in response[3:-1]:
+        values = line.split()
+        onus.append([values[0], values[1]])
+    return onus
+
+tn_connection = telnetlib.Telnet(HOST, 2333)
+
+tn_connection.read_until(b"Username:")
+tn_connection.write(user.encode('ascii') + b"\n")
+tn_connection.read_until(b"Password:")
+tn_connection.write(password.encode('ascii') + b"\n")
+tn_connection.read_until(b"#")
+
+print(get_unconf(tn_connection))
+# add_cards()
+# add_olt("kov", "89.46.237.100", "smartoltusr", "Wx87NJ3TGm4Rv2", 2333)
 # add_static_ip("gpon-onu_0/13/1:1", "89.46.234.12", "255.255.255.0", "89.46.234.1", "1.1.1.1", "8.8.8.8", "1234", 4)
 
 
