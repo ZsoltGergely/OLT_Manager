@@ -17,9 +17,6 @@ time.sleep(4)
 
 print(get_unconf(tn_connection))
 
-
-
-
 tn_connection.close()
 
 # TRUNCATE `cards`;TRUNCATE  `olts`;TRUNCATE `onu_vports`;TRUNCATE`pon_ports`
