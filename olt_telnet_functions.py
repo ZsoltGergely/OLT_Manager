@@ -25,6 +25,7 @@ def get_traffic_telnet(port, tn_connection):
     command = "show interface " + port + "\n"
     tn_connection.write(str.encode(command))
     response = tn_connection.read_until(b"#").decode('ascii')
+    log(response)
     response = response.replace(" ","")
     try:
         split = response.split("rate:")
@@ -41,7 +42,7 @@ def get_traffic_telnet(port, tn_connection):
         output_all_bdw = format_bytes(int(clean_traffic(raw_output_curr)[0]))
         output_all_pps = clean_traffic(raw_output_curr)[1]
         return [input_curr_bdw,input_curr_pps,output_curr_bdw,output_curr_pps,input_all_bdw,input_all_pps,output_all_bdw,output_all_pps]
-    except IndexError:
+    except:
         return[["0","0"],"0",["0","0"],"0",["0","0"],"0",["0","0"],"0",]
 
 
@@ -50,11 +51,12 @@ def get_signal_telnet(port, tn_connection):
     command = "show pon power att " + port + "\n"
     tn_connection.write(str.encode(command))
     response = tn_connection.read_until(b"#").decode('ascii')
+    log(response)
     try:
         split = response.split("Rx")
         value2 = split[1][2:9]
         value1 = split[2][1:8]
-        return [value1,value2]
+        return [value1,value2[:-1]]
     except IndexError:
         return["0.000","0.000"]
 
@@ -258,7 +260,7 @@ def authorize(sn, unauth_port, name, address, device_type, vlan, tn_connection):
 
     commands = [
     "conf t",
-    "interface {}".format(unauth_port[:-2].replace("onu", "olt")),
+    "interface {}".format(unauth_port.split(":")[0].replace("onu", "olt")),
     "no onu {}".format(unauth_port.split(":")[1]),
     "onu {} type {} sn {}".format(unauth_port.split(":")[1], dev_type[0], sn),
     "exit",
@@ -285,8 +287,20 @@ def authorize(sn, unauth_port, name, address, device_type, vlan, tn_connection):
         commands.append("loop-detect ethuni eth_0/{} enable".format(no))
         commands.append("vlan port eth_0/{} mode tag vlan {}".format(no, vlan))
         commands.append("dhcp-ip ethuni eth_0/{} from-internet".format(no))
+    commands.append("end")
     send_multiple(commands, tn_connection)
-    sql = "INSERT INTO `clients`(`name`, `address`, `device_type`) VALUES (%s, %s, %s)"
-    val = (name, address, dev_type[2])
+    sql = "INSERT INTO `clients`(`name`, `sn`, `address`, `device_type`, `port`) VALUES (%s, %s, %s, %s, %s)"
+    val = (name, sn, address, dev_type[2], unauth_port)
     mycursor.execute(sql, val)
     mydb.commit()
+
+def delete(onu_port, tn_connection):
+    mycursor.execute("DELETE FROM clients WHERE port = '{}'".format(onu_port))
+    mydb.commit()
+    commands = [
+    "conf t",
+    "interface {}".format(onu_port.split(":")[0].replace("onu", "olt")),
+    "no onu {}".format(onu_port.split(":")[1]),
+    "end",
+    ]
+    send_multiple(commands, tn_connection)
