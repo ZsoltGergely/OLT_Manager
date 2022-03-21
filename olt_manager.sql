@@ -66,6 +66,15 @@ CREATE TABLE `device_types` (
   `def_config` char(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+
+CREATE TABLE `speed_profiles` (
+  `id` int(11) NOT NULL,
+  `name` int(11) NOT NULL,
+  `t/r` tinyint(4) NOT NULL,
+  `limit` int(11) NOT NULL,
+  `default` tinyint(1)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- --------------------------------------------------------
 
 --

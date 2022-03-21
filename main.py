@@ -1,7 +1,8 @@
 import telnetlib
 import re
-from datetime import datetime
 import mysql.connector
+import string
+import random
 
 mydb = mysql.connector.connect(
   host="localhost",
@@ -192,11 +193,7 @@ def set_bridge(port, vlan, onu_port_nr):
     response = tn.read_until(b"#").decode('ascii')
     log(response)
 
-def add_olt(name, ip, telnet_user, telnet_pass, telnet_port):
-    sql = "INSERT INTO `olts`(`name`, `ip`, `telnet_user`, `telnet_pass`, `telnet_port`) VALUES (%s, %s, %s, %s, %s)"
-    val = (name, ip, telnet_user, telnet_pass, telnet_port)
-    mycursor.execute(sql, val)
-    mydb.commit()
+def add_olt(name, ip, telnet_user, telnet_pass, telnet_port, snmp_port):
     global tn_connection
     tn_connection = telnetlib.Telnet(ip, telnet_port)
 
@@ -206,6 +203,12 @@ def add_olt(name, ip, telnet_user, telnet_pass, telnet_port):
     tn_connection.write(password.encode('ascii') + b"\n")
     log(tn_connection.read_until(b"#"))
     add_cards(tn_connection, mycursor.lastrowid)
+    snmp_comms = init_olt(tn_connection)
+
+    sql = "INSERT INTO `olts`(`name`, `ip`, `telnet_user`, `telnet_pass`, `telnet_port`, `r_community`, `rw_community`, `snmp_port`) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+    val = (name, ip, telnet_user, telnet_pass, telnet_port, snmp_comms[0], snmp_comms[1], snmp_port)
+    mycursor.execute(sql, val)
+    mydb.commit()
 
 def add_cards(tn_connection, olt_id):
 # types:
@@ -259,6 +262,51 @@ def add_ports(type, card_id, port_nr):
                 mydb.commit()
 
 
+def init_olt(tn_connection):
+    from datetime import datetime
+    now = datetime.now()
+    formated_date = now.strftime("%H:%M:%S %m %d %y")
+    r_comm = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 12))
+    rw_comm =''.join(random.choices(string.ascii_uppercase + string.digits, k = 12))
+    commands = [
+    "conf t",
+    "auto-write enable",
+    "auto-write 18:00:00  everyday",
+    "snmp-server view allview 1.3 included",
+    "snmp-server community {} view allview ro".format(r_comm),
+    "snmp-server community {} view allview rw".format(rw_comm),
+    "clock set {}".format(formated_date),
+    "ntp server 10.11.12.254 priority 2 version 3",
+    "ntp server 93.190.144.3 priority 3 version 3",
+    "no ntp alarm-threshold",
+    "no ntp enable",
+    "ntp enable",
+    "line telnet idle-timeout 60",
+    "line telnet absolute-timeout 9999",
+    "end",
+    "exit",
+    ]
+
+
+    mycursor.execute("SELECT * FROM speed_profiles")
+
+    profiles = mycursor.fetchall()
+    commands.append("conf t")
+    commands.append("gpon")
+    for profile in profiles:
+
+        if profile[2] == 0:
+            command.append("profile traffic {} sir {} pir {}".format("MNGR_"+profile[1]+"_DW", profile[3], profile[3]))
+
+        if profile[2] == 1:
+            commands.append("profile tcont {} type 5 fixed 64 assured 64 maximum {}".format("MNGR_"+profile[1]+"_UP", profile[3], profile[3]))
+
+
+    ]
+    commands.append("exit")
+    commands.append("end")
+    send_multiple(commands)
+    return [r_comm, rw_comm]
 # add_cards()
 add_olt("kov", "89.46.237.100", "smartoltusr", "Wx87NJ3TGm4Rv2", 2333)
 
