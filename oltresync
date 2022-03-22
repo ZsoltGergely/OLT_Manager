@@ -1,0 +1,194 @@
+switchport vlan 450 tag vport 1
+interface gpon-onu_1/17/15:21
+conf t
+/*** user log in ***/
+/--- user log out ---/
+exit
+end
+flow 1 priority 0 vid 444
+pon-onu-mng gpon-onu_1/17/15:21
+exit
+switchport vlan 444 tag vport 1
+interface gpon-onu_1/17/15:21
+conf t
+/*** user log in ***/
+/--- user log out ---/
+exit
+end
+flow 1 priority 0 vid 400
+pon-onu-mng gpon-onu_1/17/15:21
+exit
+switchport vlan 400 tag vport 1
+interface gpon-onu_1/17/15:21
+conf t
+/*** user log in ***/
+/--- user log out ---/
+exit
+end
+flow 1 priority 0 vid 1010
+pon-onu-mng gpon-onu_1/17/15:21
+exit
+switchport vlan 1010 tag vport 1
+interface gpon-onu_1/17/15:21
+conf t
+/*** user log in ***/
+/--- user log out ---/
+exit
+end
+flow 1 priority 0 vid 446
+pon-onu-mng gpon-onu_1/17/15:21
+exit
+switchport vlan 446 tag vport 1
+interface gpon-onu_1/17/15:21
+conf t
+/*** user log in ***/
+exit
+end
+flow 1 priority 0 vid 445
+pon-onu-mng gpon-onu_1/17/15:21
+exit
+switchport vlan 445 tag vport 1
+interface gpon-onu_1/17/15:21
+conf t
+/*** user log in ***/
+/--- user log out ---/
+exit
+end
+flow 1 priority 0 vid 1
+pon-onu-mng gpon-onu_1/17/15:21
+exit
+switchport vlan 1 tag vport 1
+interface gpon-onu_1/17/15:21
+conf t
+/*** user log in ***/
+/--- user log out ---/
+exit
+end
+security-mng 999 state enable ingress-type lan protocol ftp telnet ssh snmp tr069
+security-mng 998 state enable mode permit ingress-type lan protocol web https
+loop-detect ethuni eth_0/4 enable
+loop-detect ethuni eth_0/3 enable
+loop-detect ethuni eth_0/2 enable
+loop-detect ethuni eth_0/1 enable
+dhcp-ip ethuni eth_0/4 from-internet
+dhcp-ip ethuni eth_0/3 from-internet
+dhcp-ip ethuni eth_0/2 from-internet
+dhcp-ip ethuni eth_0/1 from-internet
+vlan port eth_0/4 mode tag vlan 1239
+vlan port eth_0/3 mode tag vlan 1239
+vlan port eth_0/2 mode tag vlan 1239
+vlan port eth_0/1 mode tag vlan 1239
+switchport-bind switch_0/1 veip 1
+flow 1 priority 0 vid 1239
+flow mode 1 tag-filtervid-filter untag-filter discard
+gemport 1 flow 1
+flow 1 switch switch_0/1
+pon-onu-mng gpon-onu_1/17/15:21
+exit
+switchport vlan 1239 tag vport 1
+switchport mode hybrid vport 1
+gemport 1 traffic-limit downstream smartolt-1g-down
+gemport 1 unicast tcont 1 dir both
+tcont 1 profile smartolt-1g-up
+description zone_csiki_descr__odb_csiki_5_voican_lat_45.8735318_long_25.7891559_extid_ztegc9b68fea_authd_20210503
+name szoti
+interface gpon-onu_1/17/15:21
+exit
+onu 21 type zte-f660v6.0 sn ztegc9b68fea
+interface gpon-olt_1/17/15
+conf t
+/*** user log in ***/
+/--- user log out ---/
+exit
+end
+no onu 21
+interface gpon-olt_1/17/15
+conf t
+/*** user log in ***/
+/--- user log out ---/
+exit
+end
+
+vty0 smartoltusr@185.17.144.245 12:39:48 03/22/2022 UTC /*** user log in ***/
+
+vty0 smartoltusr@185.17.144.245 12:39:48 03/22/2022 UTC /--- user log out ---/
+
+vty0 smartoltusr@185.17.144.245 12:39:48 03/22/2022 UTC exit
+vty0 smartoltusr@185.17.144.245 12:39:48 03/22/2022 UTC end
+vty0 smartoltusr@185.17.144.245 12:39:48 03/22/2022 UTC flow 1 priority 0 vid
+444
+
+
+vty0 smartoltusr@185.17.144.245 12:39:47 03/22/2022 UTC pon-onu-mng gpon-onu_1
+/17/15:21
+vty0 smartoltusr@185.17.144.245 12:39:47 03/22/2022 UTC exit
+vty0 smartoltusr@185.17.144.245 12:39:47 03/22/2022 UTC switchport vlan 444 ta
+g vport 1
+vty0 smartoltusr@185.17.144.245 12:39:47 03/22/2022 UTC interface gpon-onu_1/1
+7/15:21
+vty0 smartoltusr@185.17.144.245 12:39:47 03/22/2022 UTC conf t
+vty0 smartoltusr@185.17.144.245 12:39:47 03/22/2022 UTC /*** user log in ***/
+
+
+
+vty0 smartoltusr@185.17.144.245 12:39:47 03/22/2022 UTC /--- user log out ---/
+
+vty0 smartoltusr@185.17.144.245 12:39:47 03/22/2022 UTC exit
+vty0 smartoltusr@185.17.144.245 12:39:47 03/22/2022 UTC end
+vty0 smartoltusr@185.17.144.245 12:39:47 03/22/2022 UTC flow 1 priority 0 vid
+400
+vty0 smartoltusr@185.17.144.245 12:39:46 03/22/2022 UTC pon-onu-mng gpon-onu_1
+/17/15:21
+vty0 smartoltusr@185.17.144.245 12:39:46 03/22/2022 UTC exit
+
+
+vty0 smartoltusr@185.17.144.245 12:39:46 03/22/2022 UTC switchport vlan 400 ta
+g vport 1
+vty0 smartoltusr@185.17.144.245 12:39:46 03/22/2022 UTC interface gpon-onu_1/1
+7/15:21
+vty0 smartoltusr@185.17.144.245 12:39:46 03/22/2022 UTC conf t
+vty0 smartoltusr@185.17.144.245 12:39:46 03/22/2022 UTC /*** user log in ***/
+
+vty0 smartoltusr@185.17.144.245 12:39:46 03/22/2022 UTC /--- user log out ---/
+
+vty0 smartoltusr@185.17.144.245 12:39:46 03/22/2022 UTC exit
+
+
+vty0 smartoltusr@185.17.144.245 12:39:46 03/22/2022 UTC end
+vty0 smartoltusr@185.17.144.245 12:39:46 03/22/2022 UTC flow 1 priority 0 vid
+1010
+vty0 smartoltusr@185.17.144.245 12:39:45 03/22/2022 UTC pon-onu-mng gpon-onu_1
+/17/15:21
+vty0 smartoltusr@185.17.144.245 12:39:45 03/22/2022 UTC exit
+vty0 smartoltusr@185.17.144.245 12:39:45 03/22/2022 UTC switchport vlan 1010 t
+ag vport 1
+vty0 smartoltusr@185.17.144.245 12:39:45 03/22/2022 UTC interface gpon-onu_1/1
+7/15:21
+
+
+vty0 smartoltusr@185.17.144.245 12:39:45 03/22/2022 UTC conf t
+vty0 smartoltusr@185.17.144.245 12:39:45 03/22/2022 UTC /*** user log in ***/
+
+vty0 smartoltusr@185.17.144.245 12:39:45 03/22/2022 UTC /--- user log out ---/
+
+vty0 smartoltusr@185.17.144.245 12:39:45 03/22/2022 UTC exit
+vty0 smartoltusr@185.17.144.245 12:39:44 03/22/2022 UTC end
+vty0 smartoltusr@185.17.144.245 12:39:44 03/22/2022 UTC flow 1 priority 0 vid
+446
+
+
+vty0 smartoltusr@185.17.144.245 12:39:44 03/22/2022 UTC pon-onu-mng gpon-onu_1
+/17/15:21
+vty0 smartoltusr@185.17.144.245 12:39:44 03/22/2022 UTC exit
+vty0 smartoltusr@185.17.144.245 12:39:44 03/22/2022 UTC switchport vlan 446 ta
+g vport 1
+vty0 smartoltusr@185.17.144.245 12:39:44 03/22/2022 UTC interface gpon-onu_1/1
+7/15:21
+vty0 smartoltusr@185.17.144.245 12:39:44 03/22/2022 UTC conf t
+vty0 smartoltusr@185.17.144.245 12:39:44 03/22/2022 UTC /*** user log in ***/
+
+
+
+vty0 smartoltusr@185.17.144.245 12:39:44 03/22/2022 UTC /--- user log out ---/
+
+vty0 smartoltusr@185.17.144.245 12:39:43 03/22/2022 UTC exit

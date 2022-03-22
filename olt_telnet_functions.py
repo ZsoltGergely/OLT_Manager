@@ -304,3 +304,46 @@ def delete(onu_port, tn_connection):
     "end",
     ]
     send_multiple(commands, tn_connection)
+
+def attach_vlan_onu(vlan, client_port, tn_connection):
+    # add device type wlan and eth index
+
+    tn_connection.write(str.encode("conf t\n"))
+    tn_connection.read_until(b"#")
+
+    commands = [
+    "interface {}".format(client_port),
+    "switchport vlan {} tag vport 1".format(vlan),
+    "exit",
+    "pon-onu-mng {}".format(client_port)
+    "end"
+    ]
+    send_multiple(commands, tn_connection)
+    response = tn_connection.read_until(b"#").decode('ascii')
+    log(response)
+
+def add_vlan_onu_port(vlan, client_port, onu_port_nr, untag, tn_connection):
+
+    tn_connection.write(str.encode("conf t\n"))
+    tn_connection.read_until(b"#")
+
+    commands = [
+    "pon-onu-mng {}".format(client_port),
+    "dhcp-ip ethuni eth_0/{} from-internet".format(onu_port_nr),
+    "no vlan port eth_0/{} mode".format(onu_port_nr)
+    ]
+    if untag == 1:
+        commands.append("vlan port eth_0/{} mode hybrid def-vlan {}".format(onu_port_nr, vlan))
+    else:
+        commands.append("vlan port eth_0/{} modetag vlan {}".format(onu_port_nr, vlan))
+    commands.append("end")
+    send_multiple(commands, tn_connection)
+    response = tn_connection.read_until(b"#").decode('ascii')
+    log(response)
+
+def parse_onu_config(config):
+    lines = config.splitlines()
+    for line in lines:
+        line = line.split(":")
+        vlans = line[1]
+        vlans = vlans.split(",")
