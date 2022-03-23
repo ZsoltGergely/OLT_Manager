@@ -362,6 +362,20 @@ def add_vlan_onu_port(vlan, client_port, onu_port_nr, untag, tn_connection):
     response = tn_connection.read_until(b"#").decode('ascii')
     log(response)
 
+def set_wlan(port, wlan_port_nr, ssid, password, tn_connection):
+    commands=[
+    "conf t",
+    "pon-onu-mng {}".format(port),
+    "wifi enable",
+    "interface wifi wifi_0/{}".format(wlan_port_nr),
+    "ssid ctrl wifi_0/{} name {}".format(wlan_port_nr, ssid),
+    "ssid auth wpa wifi_0/{} wpa2-psk encrypt aes key {}".format(wlan_port_nr, password),
+    "end"
+    ]
+    send_multiple(commands, tn_connection)
+    response = tn_connection.read_until(b"#").decode('ascii')
+    log(response)
+
 def parse_onu_config(config, port, tn_connection):
     lines = config.splitlines()
     main_vlan = 1
@@ -369,7 +383,6 @@ def parse_onu_config(config, port, tn_connection):
     # onu_port_nr = mycursor.fetchone()
     onu_port_nr = 4 #get this from onu type
 
-    mycursor.
     for line in lines:
         line = line.split(":")
         if line[0]=="att_vlans":
@@ -407,8 +420,8 @@ def parse_onu_config(config, port, tn_connection):
                         # add_vlan_onu_port(untag[1], port, onu_port_nr, 0, tn_connection)
                         print(vlan, port, onu_port_nr, 0, tn_connection)
         elif "wlan" in line[0]:
-            onu_port = line[0].split('wlan')
-            onu_port_nr = onu_port[0]
+            wlan_port = line[0].split('wlan')
+            wlan_port_nr = onu_port[0]
             if line[1] == "ssid":
-                # set_wlan(port, onu_port_nr, line[2], line[3], tn_connection)
-                print(port, onu_port_nr, line[2], line[3], tn_connection)
+                # set_wlan(port, wlan_port_nr, line[2], line[3], vlan,  tn_connection)
+                print(port, wlan_port_nr, line[2], line[3], tn_connection)
