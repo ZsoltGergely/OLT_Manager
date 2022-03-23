@@ -37,12 +37,14 @@ def get_traffic_telnet(port, tn_connection):
         input_curr_pps = clean_traffic(raw_input_curr)[1]
         output_curr_bdw = format_bytes(int(clean_traffic(raw_output_curr)[0]))
         output_curr_pps = clean_traffic(raw_output_curr)[1]
-        input_all_bdw = format_bytes(int(clean_traffic(raw_input_curr)[0]))
-        input_all_pps = clean_traffic(raw_input_curr)[1]
-        output_all_bdw = format_bytes(int(clean_traffic(raw_output_curr)[0]))
-        output_all_pps = clean_traffic(raw_output_curr)[1]
+        input_all_bdw = format_bytes(int(clean_traffic(raw_input_all)[0]))
+        input_all_pps = clean_traffic(raw_input_all)[1]
+        output_all_bdw = format_bytes(int(clean_traffic(raw_output_all)[0]))
+        output_all_pps = clean_traffic(raw_output_all)[1]
         return [input_curr_bdw,input_curr_pps,output_curr_bdw,output_curr_pps,input_all_bdw,input_all_pps,output_all_bdw,output_all_pps]
-    except:
+    except Exception as e:
+        log(e)
+
         return[["0","0"],"0",["0","0"],"0",["0","0"],"0",["0","0"],"0",]
 
 

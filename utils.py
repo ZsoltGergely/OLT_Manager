@@ -28,11 +28,9 @@ def format_bytes(size):
     return [size, power_labels[n]+'bps']
 
 def clean_traffic(raw):
-    bps_ind = raw.find("bps")
-    pps_ind = raw.find("pps")
-    bps_val = raw[0:bps_ind]
-    pps_val = raw[bps_ind+3:pps_ind]
-    return [bps_val, pps_val]
+    bps_val = raw.split("Bps")
+    pps_val = bps_val[1].split("pps")
+    return [bps_val[0], pps_val[0]]
 
 def random_string(size):
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k = size))
