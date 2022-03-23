@@ -359,20 +359,32 @@ def parse_onu_config(config, port, tn_connection):
         elif line[0] == "conn":
             if line[1] == "ip":
                 onu_port_nr = 4 #get this from onu type
-                settings = line[3].split(',')
+                settings = line[2].split(',')
                 # add_static_ip(port, settings[0], settings[1], settings[2], settings[3], settings[4], vlan, onu_port_nr, tn_connection)
                 print(port, settings[0], settings[1], settings[2], settings[3], settings[4], main_vlan, onu_port_nr, tn_connection)
             if line[1] == "pppoe":
                 onu_port_nr = 4 #get this from onu type
-                settings = line[3].split(',')
+                settings = line[2].split(',')
                 # set_pppoe(port, settings[0], setting[1], onu_port_nr, onu_port_nr, tn_connection)
                 print(port, settings[0], setting[1], onu_port_nr, onu_port_nr, tn_connection)
-        if "eth" in line[0]:
-            port = line[1].split('eth')
-            port_nr = port[1]
+        elif "eth" in line[0]:
+            onu_port = line[0].split('eth')
+            onu_port_nr = onu_port[0]
             if line[1] == "vlan":
                 settings = line[2].split("/")
                 untag = settings[0].split(';')
                 tag = settings[1].split(';')
                 if untag[0]=="untag":
-                    add_vlan_onu_port()
+                    # add_vlan_onu_port(untag[1], port, port_nr, 1, tn_connection)
+                    print(untag[1], port, onu_port_nr, 1, tn_connection)
+                if tag[0] == "tag":
+                    vlans = tag[1].split(",")
+                    for vlan in vlans:
+                        # add_vlan_onu_port(untag[1], port, onu_port_nr, 0, tn_connection)
+                        print(vlan, port, onu_port_nr, 0, tn_connection)
+        elif "wlan" in line[0]:
+            onu_port = line[0].split('wlan')
+            onu_port_nr = onu_port[0]
+            if line[1] == "ssid":
+                # set_wlan(port, onu_port_nr, line[2], line[3], tn_connection)
+                print(port, onu_port_nr, line[2], line[3], tn_connection)
