@@ -100,6 +100,27 @@ def add_static_ip(port, ip, subnet, gateway, dns1, dns2, vlan, onu_port_nr, tn_c
     response = tn_connection.read_until(b"#").decode('ascii')
     log(response)
 
+def set_pppoe(port, username, password, onu_port_nr, tn_connection):
+
+    tn_connection.write(str.encode("conf t\n"))
+    tn_connection.read_until(b"#")
+    commands = [
+    "pon-onu-mng {}".format(port),
+    "no pppoe 1",
+    "no ip-host 1"
+    "no vlan-filter-mode ip host 1",
+    "switchport-bind switch_0/1 iphost 1",
+    "switchport-bind switch_0/1 veip 1",
+    "vlan-filter-mode iphost 1 tag-filter vid-filter untag-filter discard",
+    "vlan-filter iphost 1 priority 0 vid {}".format(vlan),
+    "pppoe 1 nat enable connect always user {} password {}".format(username, password),
+    ]
+    for no in range(1,onu_port_nr):
+        commands.append("dhcp-ip ethuni eth_0/{} from-onu".format(no))
+    send_multiple(commands, tn_connection)
+    response = tn_connection.read_until(b"#").decode('ascii')
+    log(response)
+
 def set_bridge(port, vlan, onu_port_nr, tn_connection):
     tn_connection.write(str.encode("conf t\n"))
     tn_connection.read_until(b"#")
@@ -344,6 +365,11 @@ def add_vlan_onu_port(vlan, client_port, onu_port_nr, untag, tn_connection):
 def parse_onu_config(config, port, tn_connection):
     lines = config.splitlines()
     main_vlan = 1
+    # mycursor.execute("inner join get onu".format(device_type))
+    # onu_port_nr = mycursor.fetchone()
+    onu_port_nr = 4 #get this from onu type
+
+    mycursor.
     for line in lines:
         line = line.split(":")
         if line[0]=="att_vlans":
@@ -352,21 +378,19 @@ def parse_onu_config(config, port, tn_connection):
                 print(vlan, port, tn_connection)
                 # attach_vlan_onu(vlan, port, tn_connection)
         elif line[0] == "main_vlan":
-            onu_port_nr = 4 #get this from onu type
             main_vlan = line[1]
             # set_bridge(port, line[1], onu_port_nr, tn_connection)
             print(port, line[1], onu_port_nr, tn_connection)
         elif line[0] == "conn":
             if line[1] == "ip":
-                onu_port_nr = 4 #get this from onu type
                 settings = line[2].split(',')
                 # add_static_ip(port, settings[0], settings[1], settings[2], settings[3], settings[4], vlan, onu_port_nr, tn_connection)
                 print(port, settings[0], settings[1], settings[2], settings[3], settings[4], main_vlan, onu_port_nr, tn_connection)
             if line[1] == "pppoe":
-                onu_port_nr = 4 #get this from onu type
+
                 settings = line[2].split(',')
-                # set_pppoe(port, settings[0], setting[1], onu_port_nr, onu_port_nr, tn_connection)
-                print(port, settings[0], setting[1], onu_port_nr, onu_port_nr, tn_connection)
+                # set_pppoe(port, settings[0], setting[1], onu_port_nr, tn_connection)
+                print(port, settings[0], settings[1], onu_port_nr, tn_connection)
         elif "eth" in line[0]:
             onu_port = line[0].split('eth')
             onu_port_nr = onu_port[0]

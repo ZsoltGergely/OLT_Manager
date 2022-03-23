@@ -27,7 +27,7 @@ import time
 # TRUNCATE `cards`;TRUNCATE  `olts`;TRUNCATE `onu_vports`;TRUNCATE`pon_ports`
 
 # client config
-config = "att_vlans:445,400,5\nmain_vlan:1236\nconn:ip:192.168.1.2,255.255.255.0,192.168.1.1,1.1.1.1,8.8.8.8\neth1:lan\neth2:vlan:untag;1/tag;445,400\neth3:lan\neth4:lan\nwlan1:ssid:asdasd:asdfghjk"
+config = "att_vlans:445,400,5\nmain_vlan:1236\nconn:pppoe:asdfg,gfyeuf\neth1:lan\neth2:vlan:untag;1/tag;445,400\neth3:lan\neth4:lan\nwlan1:ssid:asdasd:asdfghjk"
 tn_connection=[]
 parse_onu_config(config, "gpon-on_1/13/1:1", tn_connection)
 # att_vlans:445,400,5
