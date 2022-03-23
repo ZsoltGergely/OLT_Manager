@@ -1,14 +1,14 @@
 from utils import *
 import mysql.connector
 
-mydb = mysql.connector.connect(
-  host="localhost",
-  user="root",
-  password="",
-  database="olt_management"
-)
+# mydb = mysql.connector.connect(
+#   host="localhost",
+#   user="root",
+#   password="",
+#   database="olt_management"
+# )
 
-mycursor = mydb.cursor()
+# mycursor = mydb.cursor()
 
 def connect(HOST, user, password, port):
     tn_connection = telnetlib.Telnet(HOST, port)
@@ -78,7 +78,7 @@ def get_olt_cards(tn_connection):
     return cards
 
 
-def add_static_ip(port, ip, subnet, gateway, dns1, dns2, vlan, tn_connection):
+def add_static_ip(port, ip, subnet, gateway, dns1, dns2, vlan, onu_port_nr, tn_connection):
 
     tn_connection.write(str.encode("conf t\n"))
     tn_connection.read_until(b"#")
@@ -315,7 +315,7 @@ def attach_vlan_onu(vlan, client_port, tn_connection):
     "interface {}".format(client_port),
     "switchport vlan {} tag vport 1".format(vlan),
     "exit",
-    "pon-onu-mng {}".format(client_port)
+    "pon-onu-mng {}".format(client_port),
     "end"
     ]
     send_multiple(commands, tn_connection)
@@ -341,9 +341,38 @@ def add_vlan_onu_port(vlan, client_port, onu_port_nr, untag, tn_connection):
     response = tn_connection.read_until(b"#").decode('ascii')
     log(response)
 
-def parse_onu_config(config):
+def parse_onu_config(config, port, tn_connection):
     lines = config.splitlines()
+    main_vlan = 1
     for line in lines:
         line = line.split(":")
-        vlans = line[1]
-        vlans = vlans.split(",")
+        if line[0]=="att_vlans":
+            vlans = line[1].split(",")
+            for vlan in vlans:
+                print(vlan, port, tn_connection)
+                # attach_vlan_onu(vlan, port, tn_connection)
+        elif line[0] == "main_vlan":
+            onu_port_nr = 4 #get this from onu type
+            main_vlan = line[1]
+            # set_bridge(port, line[1], onu_port_nr, tn_connection)
+            print(port, line[1], onu_port_nr, tn_connection)
+        elif line[0] == "conn":
+            if line[1] == "ip":
+                onu_port_nr = 4 #get this from onu type
+                settings = line[3].split(',')
+                # add_static_ip(port, settings[0], settings[1], settings[2], settings[3], settings[4], vlan, onu_port_nr, tn_connection)
+                print(port, settings[0], settings[1], settings[2], settings[3], settings[4], main_vlan, onu_port_nr, tn_connection)
+            if line[1] == "pppoe":
+                onu_port_nr = 4 #get this from onu type
+                settings = line[3].split(',')
+                # set_pppoe(port, settings[0], setting[1], onu_port_nr, onu_port_nr, tn_connection)
+                print(port, settings[0], setting[1], onu_port_nr, onu_port_nr, tn_connection)
+        if "eth" in line[0]:
+            port = line[1].split('eth')
+            port_nr = port[1]
+            if line[1] == "vlan":
+                settings = line[2].split("/")
+                untag = settings[0].split(';')
+                tag = settings[1].split(';')
+                if untag[0]=="untag":
+                    add_vlan_onu_port()

@@ -10,24 +10,29 @@ import time
 # authorize(get_unconf(tn_connection)[0][1],get_unconf(tn_connection)[0][0], "Test", "Test street ye", 1, 1236, tn_connection)
 # time.sleep(4)
 # print(get_signal_telnet("gpon-onu_1/13/1:1",tn_connection))
+
 # # print(get_traffic_telnet("gpon-onu_1/13/1:1",tn_connection))
 #
 # delete("gpon-onu_1/13/1:1", tn_connection)
 # time.sleep(4)
 #
 # print(get_unconf(tn_connection))
+
 #
+
 # tn_connection.close()
+
 
 # TRUNCATE `cards`;TRUNCATE  `olts`;TRUNCATE `onu_vports`;TRUNCATE`pon_ports`
 
 # client config
-config = "att_vlans:445,400,5\nmain vlan:1236\nconn:ip;value:192.168.1.2,255.255.255.0,192.168.1.1,1.1.1.1,8.8.8.8\neth1:lan;value:\neth2:vlan;value:untag:1/tag:445,400\neth3:lan;value:\neth4:lan;value:"
-parse_onu_config(config)
+config = "att_vlans:445,400,5\nmain_vlan:1236\nconn:ip:192.168.1.2,255.255.255.0,192.168.1.1,1.1.1.1,8.8.8.8\neth1:lan;value:\neth2:vlan;value:untag:1/tag:445,400\neth3:lan;value:\neth4:lan;value:"
+tn_connection=[]
+parse_onu_config(config, "gpon-on_1/13/1:1", tn_connection)
 # att_vlans:445,400,5
-# main vlan:1236
-# conn:ip;value:192.168.1.2,255.255.255.0,192.168.1.1,1.1.1.1,8.8.8.8
-# eth1:lan;value:
-# eth2:vlan;value:untag:1/tag:445,400
-# eth3:lan;value:
-# eth4:lan;value:
+# main_vlan:1236
+# conn:ip:192.168.1.2,255.255.255.0,192.168.1.1,1.1.1.1,8.8.8.8
+# eth1:lan
+# eth2:vlan:untag;1/tag;445,400
+# eth3:lan
+# eth4:lan
