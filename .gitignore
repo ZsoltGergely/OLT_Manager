@@ -2,5 +2,4 @@ logs/
 atom-sftp-sync.json
 *.txt
 __pycache__/
-todo
 .gitignore
