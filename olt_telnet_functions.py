@@ -43,8 +43,7 @@ def get_traffic_telnet(port, tn_connection):
         output_all_pps = clean_traffic(raw_output_all)[1]
         return [input_curr_bdw,input_curr_pps,output_curr_bdw,output_curr_pps,input_all_bdw,input_all_pps,output_all_bdw,output_all_pps]
     except Exception as e:
-        log(e)
-
+        print(e)
         return[["0","0"],"0",["0","0"],"0",["0","0"],"0",["0","0"],"0",]
 
 
@@ -276,7 +275,7 @@ def get_unconf(tn_connection):
     else:
         return []
 
-def authorize(sn, unauth_port, name, address, device_type, vlan, tn_connection):
+def authorize(sn, unauth_port, name, address, device_type, vlan, olt_id, tn_connection):
 
     mycursor.execute("SELECT name, nr_ports, id FROM device_types WHERE id = {}".format(device_type))
     dev_type = mycursor.fetchone()
@@ -312,8 +311,8 @@ def authorize(sn, unauth_port, name, address, device_type, vlan, tn_connection):
         commands.append("dhcp-ip ethuni eth_0/{} from-internet".format(no))
     commands.append("end")
     send_multiple(commands, tn_connection)
-    sql = "INSERT INTO `clients`(`name`, `sn`, `address`, `device_type`, `port`) VALUES (%s, %s, %s, %s, %s)"
-    val = (name, sn, address, dev_type[2], unauth_port)
+    sql = "INSERT INTO `clients`(`name`, `sn`, `address`, `device_type`, `olt_id`, `port`) VALUES (%s, %s, %s, %s, %s, %s)"
+    val = (name, sn, address, dev_type[2], olt_id, unauth_port)
     mycursor.execute(sql, val)
     mydb.commit()
 
