@@ -328,7 +328,7 @@ def delete(onu_port, tn_connection):
     send_multiple(commands, tn_connection)
 
 def attach_vlan_onu(vlan, client_port, tn_connection):
-    # add device type wlan and eth index
+    # TODO: add device type wlan and eth index
 
     tn_connection.write(str.encode("conf t\n"))
     tn_connection.read_until(b"#")
@@ -382,7 +382,7 @@ def parse_onu_config(config, port, tn_connection):
     main_vlan = 1
     # mycursor.execute("inner join get onu".format(device_type))
     # onu_port_nr = mycursor.fetchone()
-    onu_port_nr = 4 #get this from onu type
+    onu_port_nr = 4 #TODO get this from onu type
 
     for line in lines:
         line = line.split(":")
@@ -394,17 +394,19 @@ def parse_onu_config(config, port, tn_connection):
         elif line[0] == "main_vlan":
             main_vlan = line[1]
             # set_bridge(port, line[1], onu_port_nr, tn_connection)
+            # TODO add and test
             print(port, line[1], onu_port_nr, tn_connection)
         elif line[0] == "conn":
             if line[1] == "ip":
                 settings = line[2].split(',')
                 # add_static_ip(port, settings[0], settings[1], settings[2], settings[3], settings[4], vlan, onu_port_nr, tn_connection)
+                # TODO add and test
                 print(port, settings[0], settings[1], settings[2], settings[3], settings[4], main_vlan, onu_port_nr, tn_connection)
             if line[1] == "pppoe":
-
                 settings = line[2].split(',')
-                # set_pppoe(port, settings[0], setting[1], onu_port_nr, tn_connection)
                 print(port, settings[0], settings[1], onu_port_nr, tn_connection)
+                # set_pppoe(port, settings[0], setting[1], onu_port_nr, tn_connection)
+                # TODO add and test
         elif "eth" in line[0]:
             onu_port = line[0].split('eth')
             onu_port_nr = onu_port[0]
@@ -414,11 +416,13 @@ def parse_onu_config(config, port, tn_connection):
                 tag = settings[1].split(';')
                 if untag[0]=="untag":
                     # add_vlan_onu_port(untag[1], port, port_nr, 1, tn_connection)
+                    # TODO add and test
                     print(untag[1], port, onu_port_nr, 1, tn_connection)
                 if tag[0] == "tag":
                     vlans = tag[1].split(",")
                     for vlan in vlans:
                         # add_vlan_onu_port(untag[1], port, onu_port_nr, 0, tn_connection)
+                        # TODO add and test
                         print(vlan, port, onu_port_nr, 0, tn_connection)
         elif "wlan" in line[0]:
             wlan_port = line[0].split('wlan')
@@ -426,3 +430,4 @@ def parse_onu_config(config, port, tn_connection):
             if line[1] == "ssid":
                 # set_wlan(port, wlan_port_nr, line[2], line[3], vlan,  tn_connection)
                 print(port, wlan_port_nr, line[2], line[3], tn_connection)
+                # TODO add and test

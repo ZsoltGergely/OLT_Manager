@@ -1,6 +1,9 @@
 from olt_telnet_functions import *
+# from flask/app import *
 import time
-import thread
+# import threa
+from flask import Flask
+
 
 
 #
@@ -11,10 +14,15 @@ import thread
 # authorize(get_unconf(tn_connection)[0][1],get_unconf(tn_connection)[0][0], "Test", "Test street ye", 1, 1236, tn_connection)
 # time.sleep(4)
 # print(get_signal_telnet("gpon-onu_1/13/1:1",tn_connection))
+# print(get_traffic_telnet("gpon-onu_1/13/1:1",tn_connection))
 
 
+app = Flask(__name__, instance_relative_config=True)
+@app.route('/hello')
+def hello():
+    return 'Hello, World!'
 
-print(get_traffic_telnet("gpon-onu_1/13/1:1",tn_connection))
+app.run()
 
 def data_collection():
     mycursor.execute("SELECT id, ip, telnet_user, telnet_pass, telnet_port FROM olts")
@@ -27,11 +35,15 @@ def data_collection():
             signal = get_signal_telnet(onu[1], tn_connection)
             traffic = get_traffic_telnet(onu[1], tn_connection)
             sql = "INSERT INTO `data`(onu_id, sig_rx, sig_tx, bdw_in, pps_in, bdw_out, pps_out ) VALUES (%s, %s, %s, %s, %s, %s, %s)"
-            # create db, add timestamp
+            #TODO create db, add timestamp
             val = (onu[0], signal[0], signal[1], traffic[0][0], traffic[1], traffic[2][0], traffic[3])
             mycursor.execute(sql, val)
             mydb.commit()
         tn_connection.close()
+
+
+
+
 
 
 
