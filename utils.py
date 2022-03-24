@@ -1,6 +1,5 @@
 import string
 import random
-import telnetlib
 
 
 def log(string):
