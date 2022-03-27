@@ -141,6 +141,7 @@ def set_bridge(port, vlan, onu_port_nr, tn_connection):
         commands.append("loop-detect ethuni eth_0/{} enable".format(no))
         commands.append("vlan port eth_0/{} mode tag vlan {}".format(no, vlan))
         commands.append("dhcp-ip ethuni eth_0/{} from-internet".format(no))
+    commands.append("end")
     send_multiple(commands, tn_connection)
 
 def add_olt(name, ip, telnet_user, telnet_pass, telnet_port, snmp_port):
@@ -225,7 +226,7 @@ def init_olt(tn_connection):
     "snmp-server view allview 1.3 included",
     "snmp-server community {} view allview ro".format(r_comm),
     "snmp-server community {} view allview rw".format(rw_comm),
-    "clock set {}".format(formated_date),
+    "clock set {}".format(formated_date),#TODO FIX clock set
     "ntp server 10.11.12.254 priority 2 version 3",
     "ntp server 93.190.144.3 priority 3 version 3",
     "no ntp alarm-threshold",
@@ -251,14 +252,19 @@ def init_olt(tn_connection):
             commands.append("profile tcont {} type 5 fixed 64 assured 64 maximum {}".format("MNGR_"+profile[1]+"_UP", profile[3], profile[3]))
     commands.append("exit")
     commands.append("pon")
-    commands.append("onu-type V-SOL gpon")
-    commands.append("onu-type V-SOL gpon max-tcont 8")
-    commands.append("onu-type V-SOL gpon max-gemport 32")
-    commands.append("onu-type V-SOL gpon max-switch-perslot 8")
-    commands.append("onu-type V-SOL gpon max-flow-perswitch 8")
-    commands.append("onu-type V-SOL gpon max-iphost 5")
-    commands.append("onu-type-if V-SOL eth_0/1")
-    # TODO add onu type config, do this from db
+    mycursor.execute("SELECT * FROM device_types")
+
+    device_types = mycursor.fetchall()
+    for device_type in device_types:
+        name = device_type[1].replace(" ","_")
+        commands.append("onu-type {} gpon".format(name))
+        commands.append("onu-type {} gpon max-tcont 8".format(name))
+        commands.append("onu-type {} gpon max-gemport 32".format(name))
+        commands.append("onu-type {} gpon max-switch-perslot 8".format(name))
+        commands.append("onu-type {} gpon max-flow-perswitch 8".format(name))
+        commands.append("onu-type {} gpon max-iphost 5".format(name))
+        for i in range(1,int(device_type[2])+1):
+            commands.append("onu-type-if {} eth_0/{}".format(name, i))
 
     commands.append("end")
     send_multiple(commands, tn_connection)
@@ -279,44 +285,49 @@ def get_unconf(tn_connection):
     else:
         return []
 
-def authorize(sn, unauth_port, name, address, device_type, vlan, olt_id, tn_connection):
+def authorize(sn, unauth_port, name, address, device_type, vlan, olt_id, t_profile, r_profile, tn_connection):
 
     mycursor.execute("SELECT name, nr_ports, id FROM device_types WHERE id = {}".format(device_type))
     dev_type = mycursor.fetchone()
+
+    mycursor.execute("SELECT name FROM speed_profiles WHERE id = {}".format(device_type))
+    tx_profile = mycursor.fetchone()
+
+    mycursor.execute("SELECT name FROM speed_profiles WHERE id = {}".format(device_type))
+    rx_profile = mycursor.fetchone()
 
     commands = [
     "conf t",
     "interface {}".format(unauth_port.split(":")[0].replace("onu", "olt")),
     "no onu {}".format(unauth_port.split(":")[1]),
     "onu {} type {} sn {}".format(unauth_port.split(":")[1], dev_type[0], sn),
-    "exit"
+    "exit",
     "interface {}".format(unauth_port),
     "name {}".format(name.replace(" ", "_")),
     "description {}".format(sn),
+    "sn-bind enable",
+    "tcont 1 profile {}".format("MNGR_"+tx_profile[0]+"_UP"),
+    "gemport 1 name gport1 unicast tcont 1 dir both",
+    "gemport 1 traffic-limit downstream {}".format("MNGR_"+rx_profile[0]+"_DOWN"),
+    "switchport mode hybrid vport {}".format(unauth_port.split(":")[1]),
+    "switchport vlan {} tag vport {}".format(vlan, unauth_port.split(":")[1]),
     "exit"]
-    # "tcont 1 profile smartolt-1g-up",
-    # "gemport 1 unicast tcont 1 dir both",
-    # "gemport 1 traffic-limit downstream smartolt-100m-down",
-    # "switchport mode hybrid vport 1",
-    # "switchport vlan 1236 tag vport 1"]
- # TODO fix these
 
     commands.append("pon-onu-mng {}".format(unauth_port))
     commands.append("flow mode 1 tag-filter vid-filter untag-filter discard")
     commands.append("flow 1 priority 0 vid {}".format(vlan))
-    # commands.append("gemport 1 flow 1")
-    # commands.append("switchport-bind switch_0/1 veip 1")
+    commands.append("gemport 1 flow 1")
+    commands.append("switchport-bind switch_0/1 ethuni eth_0/1")
     # commands.append("security-mng 998 state enable mode permit ingress-type lan")
     # commands.append("security-mng 999 state enable ingress-type lan protocol ftp telnet ssh snmp tr069")
-# TODO fix these
     for no in range(1,int(dev_type[1])+1):
-        commands.append("loop-detect ethuni eth_0/{} enable".format(no))
+        # commands.append("loop-detect ethuni eth_0/{} enable".format(no))
         commands.append("vlan port eth_0/{} mode tag vlan {}".format(no, vlan))
         commands.append("dhcp-ip ethuni eth_0/{} from-internet".format(no))
     commands.append("end")
     send_multiple(commands, tn_connection)
-    sql = "INSERT INTO `clients`(`name`, `sn`, `address`, `device_type`, `olt_id`, `port`) VALUES (%s, %s, %s, %s, %s, %s)"
-    val = (name, sn, address, dev_type[2], olt_id, unauth_port)
+    sql = "INSERT INTO `clients`(`name`, `sn`, `address`, `device_type`, `olt_id`, `port`, `t_profile`, `r_profile`) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+    val = (name, sn, address, dev_type[2], olt_id, unauth_port, t_profile, r_profile)
     mycursor.execute(sql, val)
     mydb.commit()
 
@@ -397,7 +408,7 @@ def parse_onu_config(config, port, tn_connection):
         elif line[0] == "conn":
             if line[1] == "ip":
                 settings = line[2].split(',')
-                add_static_ip(port, settings[0], settings[1], settings[2], settings[3], settings[4], vlan, onu_port_nr, tn_connection)
+                add_static_ip(port, settings[0], settings[1], settings[2], settings[3], settings[4], main_vlan, onu_port_nr, tn_connection)
                 # TODO add and test
             if line[1] == "pppoe":
                 settings = line[2].split(',')

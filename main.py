@@ -21,10 +21,12 @@ while True:
     # try:
     #     data_collection()
     #     time.sleep(1)
-    #     print("data collected")
+    #     print("data collected")3
+
     # except Exception as e:
-    #     print("fail")
-    #     print(e)
+    #     print("fail")3
+
+    #    print(e)
 
 
 # TODO exception handling

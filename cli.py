@@ -67,6 +67,17 @@ def list_device_types():
         print("| "+str(device[0]) + " - " + str(device[1]) + " - " + str(device[2]) + " - " + str(device[3]) + " - " + str(device[4]))
     print("----------------------------------------------------------------------------------------------------")
 
+def list_speed_profiles():
+    mycursor.execute("SELECT * FROM speed_profiles")
+    profiles = mycursor.fetchall()
+    print("    ID   -   Name  -  speed  -  tx/rx ")
+
+    print("___________________________________________________________________________________________________")
+    for profile in profiles:
+        print("| "+str(profile[0]) + " - " + str(profile[1]) + " - " + str(profile[2]) + " - " + str(profile[3]) )
+    print("----------------------------------------------------------------------------------------------------")
+
+
 def cli_init_olt():
     name = input("OLT Name: ")
     ip = input("IP address: ")
@@ -84,21 +95,28 @@ def cli_init_olt():
     print("Done!")
 
 def cli_authorize():
+    list_olts()
     olt_id = input("OLT id: ")
+    list_unconfig()
     unauth_port = input("ONU Port: ")
     sn = input("ONU Serial Number: ")
     name = input("Client Name: ")
     address = input("Client Address: ")
+    list_device_types()
     device_type = input("Device Type ID: ")
     vlan = input("Main Vlan id: ")
+    list_speed_profiles()
+    rx_profile = input("Download speed profile ID: ")
+    tx_profile = input("Upload speed profile ID:")
     mycursor.execute("SELECT id, ip, telnet_user, telnet_pass, telnet_port, name FROM olts WHERE id = {}".format(olt_id))
     olt = mycursor.fetchone()
     tn_connection = connect(olt[1], olt[2], olt[3], olt[4])
     try:
-        authorize(sn, unauth_port, name, address, device_type, vlan, olt_id, tn_connection)
+        authorize(sn, unauth_port, name, address, device_type, vlan, olt_id, tx_profile, rx_profile, tn_connection)
         print("SUCCESS")
-    except:
+    except Exception as e:
         print("ONU authorization FAILED")
+        print(e)
 
 def edit_onu_config():
     client_id = input("Client id: ")
@@ -133,4 +151,3 @@ def edit_onu_config():
             tn_connection = connect(client[2], client[3], client[4], client[5])
             parse_onu_config(newconfig, client[0], tn_connection)
             print("Uploaded to OLT successfully")
-            # TODO teston olt
