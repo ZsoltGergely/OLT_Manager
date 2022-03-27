@@ -17,18 +17,17 @@ import time
 
 
 while True:
-    # options()
-    try:
-        data_collection()
-        time.sleep(1)
-        print("data collected")
-    except Exception as e:
-        print("fail")
-        print(e)
+    options()
+    # try:
+    #     data_collection()
+    #     time.sleep(1)
+    #     print("data collected")
+    # except Exception as e:
+    #     print("fail")
+    #     print(e)
 
 
-
-
+# TODO exception handling
 
 #
 # delete("gpon-onu_1/13/1:1", tn_connection)
@@ -54,8 +53,8 @@ while True:
 
 
 # att_vlans:445,400,5
-# main_vlan:1236
-# conn:ip:192.168.1.2,255.255.255.0,192.168.1.1,1.1.1.1,8.8.8.8
+# main_vlan:445
+# conn:ip:192.168.10.92,255.255.255.0,192.168.10.1,1.1.1.1,8.8.8.8
 # eth1:lan
 # eth2:vlan:untag;1/tag;445,400
 # eth3:lan

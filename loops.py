@@ -1,3 +1,5 @@
+from cli import *
+
 def data_collection():
     mycursor.execute("SELECT id, ip, telnet_user, telnet_pass, telnet_port FROM olts")
     olts = mycursor.fetchall()
@@ -23,7 +25,9 @@ def options():
     4. Edit ONU Config
     5. Get data of ONU
     6. List OLTs
-    7. Initialize OLT
+    7. List Device types
+    8. Initialize OLT
+
     -----------------
     """)
     choice = input("Choice: ")
@@ -37,8 +41,10 @@ def options():
         edit_onu_config()
     elif choice == "5":
         get_data_onu()
-    # elif input == 6:
-
-    # elif input == 7:
-    # elif input == 8:
-    # elif input == 9:
+    elif choice == "6":
+        list_olts()
+    elif choice == "7":
+        list_device_types()
+    elif choice == "8":
+        cli_init_olt()
+    # elif choice == "9":

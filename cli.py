@@ -1,3 +1,5 @@
+from olt_telnet_functions import *
+
 def get_data_onu():
     id = input("Client ID: ")
     mycursor.execute(
@@ -43,7 +45,44 @@ def list_clients():
         signal = get_signal_telnet(client[0], tn_connection)
         print("| "+client[0] + " - " + client[6].strip() + " - " + client[1] + " - " + str(signal[0])+"/"+ str(signal[1]))
     print("----------------------------------------------------------------")
-    
+
+def list_olts():
+    mycursor.execute("SELECT olts.name, olts.ip, olts.telnet_user, olts.telnet_pass, olts.telnet_port, olts.name, COUNT(clients.id) FROM olts LEFT JOIN clients ON olts.id = clients.olt_id")
+    olts = mycursor.fetchall()
+    print("    Name   -   IP Address  -  Telnet_user  -  Telnet_pass - Registered ONUs")
+
+    print("___________________________________________________________________________________________________")
+    for olt in olts:
+        print("| "+olt[0].strip() + " - " + str(olt[1]) + " - " + str(olt[2]) + " - " + str(olt[3]) + " - " + str(olt[4]))
+    print("----------------------------------------------------------------------------------------------------")
+
+
+def list_device_types():
+    mycursor.execute("SELECT * FROM device_types")
+    devices = mycursor.fetchall()
+    print("    ID   -   Name  -  Nr.Ports  -  Router? - Wifi?")
+
+    print("___________________________________________________________________________________________________")
+    for device in devices:
+        print("| "+str(device[0]) + " - " + str(device[1]) + " - " + str(device[2]) + " - " + str(device[3]) + " - " + str(device[4]))
+    print("----------------------------------------------------------------------------------------------------")
+
+def cli_init_olt():
+    name = input("OLT Name: ")
+    ip = input("IP address: ")
+    telnet_user = input("Telnet Username: ")
+    telnet_pass = input("Telnet Password: ")
+    telnet_port = input("Telnet port: ")
+    snmp_port = input("SNMP port: ")
+    tn_connection = connect(ip, telnet_user, telnet_pass, int(telnet_port))
+    snmp = init_olt(tn_connection)
+    tn_connection.close()
+    sql = "INSERT INTO `olts`( `name`, `ip`, `telnet_user`, `telnet_pass`, `telnet_port`, `r_community`, `rw_community`, `snmp_port`) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+    val = (name, ip, telnet_user, telnet_pass, telnet_port, snmp[0], snmp[1], snmp_port)
+    mycursor.execute(sql, val)
+    mydb.commit()
+    print("Done!")
+
 def cli_authorize():
     olt_id = input("OLT id: ")
     unauth_port = input("ONU Port: ")
@@ -64,7 +103,7 @@ def cli_authorize():
 def edit_onu_config():
     client_id = input("Client id: ")
     newconfig = ""
-    mycursor.execute("SELECT clients.port, clients.config, olts.ip, olts.telnet_user, olts.telnet_pass, olts.telnet_port FROM clients INNER Join olts ON clients.olt_id = olts.id WHERE id = {}".format(client_id))
+    mycursor.execute("SELECT clients.port, clients.config, olts.ip, olts.telnet_user, olts.telnet_pass, olts.telnet_port FROM clients INNER Join olts ON clients.olt_id = olts.id WHERE clients.id = {}".format(client_id))
     client = mycursor.fetchone()
     print(client[1])
     print("----------------------------------------------------------------")
@@ -78,7 +117,9 @@ def edit_onu_config():
             break
         elif line == "":
             break
-
+        elif line == "same":
+            newconfig = client[1]
+            break
         else:
             newconfig+=line+"\n"
     if not cancel:
@@ -89,7 +130,7 @@ def edit_onu_config():
             mydb.commit()
             print("Uploaded to DB successfully")
 
-            # tn_connection = connect(client[2], client[3], client[4], client[5])
-            # parse_onu_config(newconfig, client[0], tn_connection)
-            # print("Uploaded to OLT successfully")
+            tn_connection = connect(client[2], client[3], client[4], client[5])
+            parse_onu_config(newconfig, client[0], tn_connection)
+            print("Uploaded to OLT successfully")
             # TODO teston olt

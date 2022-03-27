@@ -100,8 +100,6 @@ def add_static_ip(port, ip, subnet, gateway, dns1, dns2, vlan, onu_port_nr, tn_c
     for no in range(1,onu_port_nr):
         commands.append("dhcp-ip ethuni eth_0/{} from-onu".format(no))
     send_multiple(commands, tn_connection)
-    response = tn_connection.read_until(b"#").decode('ascii')
-    log(response)
 
 def set_pppoe(port, username, password, onu_port_nr, tn_connection):
 
@@ -121,8 +119,7 @@ def set_pppoe(port, username, password, onu_port_nr, tn_connection):
     for no in range(1,onu_port_nr):
         commands.append("dhcp-ip ethuni eth_0/{} from-onu".format(no))
     send_multiple(commands, tn_connection)
-    response = tn_connection.read_until(b"#").decode('ascii')
-    log(response)
+
 
 def set_bridge(port, vlan, onu_port_nr, tn_connection):
     tn_connection.write(str.encode("conf t\n"))
@@ -145,8 +142,6 @@ def set_bridge(port, vlan, onu_port_nr, tn_connection):
         commands.append("vlan port eth_0/{} mode tag vlan {}".format(no, vlan))
         commands.append("dhcp-ip ethuni eth_0/{} from-internet".format(no))
     send_multiple(commands, tn_connection)
-    response = tn_connection.read_until(b"#").decode('ascii')
-    log(response)
 
 def add_olt(name, ip, telnet_user, telnet_pass, telnet_port, snmp_port):
     global tn_connection
@@ -238,8 +233,7 @@ def init_olt(tn_connection):
     "ntp enable",
     "line telnet idle-timeout 60",
     "line telnet absolute-timeout 9999",
-    "end",
-    "exit",
+    "end"
     ]
 
 
@@ -251,13 +245,21 @@ def init_olt(tn_connection):
     for profile in profiles:
 
         if profile[2] == 0:
-            command.append("profile traffic {} sir {} pir {}".format("MNGR_"+profile[1]+"_DW", profile[3], profile[3]))
+            commands.append("profile traffic {} sir {} pir {}".format("MNGR_"+profile[1]+"_DW", profile[3], profile[3]))
 
         if profile[2] == 1:
             commands.append("profile tcont {} type 5 fixed 64 assured 64 maximum {}".format("MNGR_"+profile[1]+"_UP", profile[3], profile[3]))
-
-
     commands.append("exit")
+    commands.append("pon")
+    commands.append("onu-type V-SOL gpon")
+    commands.append("onu-type V-SOL gpon max-tcont 8")
+    commands.append("onu-type V-SOL gpon max-gemport 32")
+    commands.append("onu-type V-SOL gpon max-switch-perslot 8")
+    commands.append("onu-type V-SOL gpon max-flow-perswitch 8")
+    commands.append("onu-type V-SOL gpon max-iphost 5")
+    commands.append("onu-type-if V-SOL eth_0/1")
+    # TODO add onu type config, do this from db
+
     commands.append("end")
     send_multiple(commands, tn_connection)
     return [r_comm, rw_comm]
@@ -287,27 +289,27 @@ def authorize(sn, unauth_port, name, address, device_type, vlan, olt_id, tn_conn
     "interface {}".format(unauth_port.split(":")[0].replace("onu", "olt")),
     "no onu {}".format(unauth_port.split(":")[1]),
     "onu {} type {} sn {}".format(unauth_port.split(":")[1], dev_type[0], sn),
-    "exit",
+    "exit"
     "interface {}".format(unauth_port),
     "name {}".format(name.replace(" ", "_")),
     "description {}".format(sn),
-    "tcont 1 profile smartolt-1g-up",
-    "gemport 1 unicast tcont 1 dir both",
-    "gemport 1 traffic-limit downstream smartolt-100m-down",
-    "switchport mode hybrid vport 1",
-    "switchport vlan 1236 tag vport 1",
     "exit"]
-
+    # "tcont 1 profile smartolt-1g-up",
+    # "gemport 1 unicast tcont 1 dir both",
+    # "gemport 1 traffic-limit downstream smartolt-100m-down",
+    # "switchport mode hybrid vport 1",
+    # "switchport vlan 1236 tag vport 1"]
+ # TODO fix these
 
     commands.append("pon-onu-mng {}".format(unauth_port))
     commands.append("flow mode 1 tag-filter vid-filter untag-filter discard")
     commands.append("flow 1 priority 0 vid {}".format(vlan))
-    commands.append("gemport 1 flow 1")
-    commands.append("switchport-bind switch_0/1 veip 1")
-    commands.append("security-mng 998 state enable mode permit ingress-type lan")
-    commands.append("security-mng 999 state enable ingress-type lan protocol ftp telnet ssh snmp tr069")
-
-    for no in range(1,int(dev_type[1])):
+    # commands.append("gemport 1 flow 1")
+    # commands.append("switchport-bind switch_0/1 veip 1")
+    # commands.append("security-mng 998 state enable mode permit ingress-type lan")
+    # commands.append("security-mng 999 state enable ingress-type lan protocol ftp telnet ssh snmp tr069")
+# TODO fix these
+    for no in range(1,int(dev_type[1])+1):
         commands.append("loop-detect ethuni eth_0/{} enable".format(no))
         commands.append("vlan port eth_0/{} mode tag vlan {}".format(no, vlan))
         commands.append("dhcp-ip ethuni eth_0/{} from-internet".format(no))
@@ -338,13 +340,11 @@ def attach_vlan_onu(vlan, client_port, tn_connection):
     commands = [
     "interface {}".format(client_port),
     "switchport vlan {} tag vport 1".format(vlan),
-    "exit",
-    "pon-onu-mng {}".format(client_port),
     "end"
     ]
     send_multiple(commands, tn_connection)
-    response = tn_connection.read_until(b"#").decode('ascii')
-    log(response)
+    # response = tn_connection.read_until(b"#").decode('ascii')
+    # log(response)
 
 def add_vlan_onu_port(vlan, client_port, onu_port_nr, untag, tn_connection):
 
@@ -362,8 +362,7 @@ def add_vlan_onu_port(vlan, client_port, onu_port_nr, untag, tn_connection):
         commands.append("vlan port eth_0/{} modetag vlan {}".format(onu_port_nr, vlan))
     commands.append("end")
     send_multiple(commands, tn_connection)
-    response = tn_connection.read_until(b"#").decode('ascii')
-    log(response)
+
 
 def set_wlan(port, wlan_port_nr, ssid, password, tn_connection):
     commands=[
@@ -376,38 +375,33 @@ def set_wlan(port, wlan_port_nr, ssid, password, tn_connection):
     "end"
     ]
     send_multiple(commands, tn_connection)
-    response = tn_connection.read_until(b"#").decode('ascii')
-    log(response)
+
 
 def parse_onu_config(config, port, tn_connection):
     lines = config.splitlines()
     main_vlan = 1
     # mycursor.execute("inner join get onu".format(device_type))
     # onu_port_nr = mycursor.fetchone()
-    onu_port_nr = 4 #TODO get this from onu type
-
+    onu_port_nr = 1 # TODO get this from onu type
     for line in lines:
         line = line.split(":")
         if line[0]=="att_vlans":
             vlans = line[1].split(",")
             for vlan in vlans:
-                print(vlan, port, tn_connection)
-                # attach_vlan_onu(vlan, port, tn_connection)
+                attach_vlan_onu(vlan, port, tn_connection)
+
         elif line[0] == "main_vlan":
             main_vlan = line[1]
-            # set_bridge(port, line[1], onu_port_nr, tn_connection)
+            set_bridge(port, line[1], onu_port_nr, tn_connection)
             # TODO add and test
-            print(port, line[1], onu_port_nr, tn_connection)
         elif line[0] == "conn":
             if line[1] == "ip":
                 settings = line[2].split(',')
-                # add_static_ip(port, settings[0], settings[1], settings[2], settings[3], settings[4], vlan, onu_port_nr, tn_connection)
+                add_static_ip(port, settings[0], settings[1], settings[2], settings[3], settings[4], vlan, onu_port_nr, tn_connection)
                 # TODO add and test
-                print(port, settings[0], settings[1], settings[2], settings[3], settings[4], main_vlan, onu_port_nr, tn_connection)
             if line[1] == "pppoe":
                 settings = line[2].split(',')
-                print(port, settings[0], settings[1], onu_port_nr, tn_connection)
-                # set_pppoe(port, settings[0], setting[1], onu_port_nr, tn_connection)
+                set_pppoe(port, settings[0], setting[1], onu_port_nr, tn_connection)
                 # TODO add and test
         elif "eth" in line[0]:
             onu_port = line[0].split('eth')
@@ -417,19 +411,16 @@ def parse_onu_config(config, port, tn_connection):
                 untag = settings[0].split(';')
                 tag = settings[1].split(';')
                 if untag[0]=="untag":
-                    # add_vlan_onu_port(untag[1], port, port_nr, 1, tn_connection)
+                    add_vlan_onu_port(untag[1], port, port_nr, 1, tn_connection)
                     # TODO add and test
-                    print(untag[1], port, onu_port_nr, 1, tn_connection)
                 if tag[0] == "tag":
                     vlans = tag[1].split(",")
                     for vlan in vlans:
-                        # add_vlan_onu_port(untag[1], port, onu_port_nr, 0, tn_connection)
+                        add_vlan_onu_port(untag[1], port, onu_port_nr, 0, tn_connection)
                         # TODO add and test
-                        print(vlan, port, onu_port_nr, 0, tn_connection)
         elif "wlan" in line[0]:
             wlan_port = line[0].split('wlan')
             wlan_port_nr = onu_port[0]
             if line[1] == "ssid":
-                # set_wlan(port, wlan_port_nr, line[2], line[3], vlan,  tn_connection)
-                print(port, wlan_port_nr, line[2], line[3], tn_connection)
+                set_wlan(port, wlan_port_nr, line[2], line[3], vlan,  tn_connection)
                 # TODO add and test
