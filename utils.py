@@ -6,7 +6,7 @@ def log(string):
 
     from datetime import datetime
 
-    print(string)
+    # print(string)
     now = datetime.now()
     date = now.strftime("%m%d%y")
     datetime = now.strftime("%m/%d/%y -- %H:%M")
@@ -24,7 +24,7 @@ def format_bytes(size):
     while size > power:
         size /= power
         n += 1
-    return [size, power_labels[n]+'bps']
+    return [int(size), power_labels[n]+'bps']
 
 def clean_traffic(raw):
     bps_val = raw.split("Bps")

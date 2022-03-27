@@ -3,14 +3,14 @@ import mysql.connector
 import telnetlib
 
 
-# mydb = mysql.connector.connect(
-#   host="localhost",
-#   user="root",
-#   password="",
-#   database="olt_management"
-# )
+mydb = mysql.connector.connect(
+  host="localhost",
+  user="root",
+  password="",
+  database="olt_management"
+)
 
-# mycursor = mydb.cursor()
+mycursor = mydb.cursor()
 
 def connect(HOST, user, password, port):
     tn_connection = telnetlib.Telnet(HOST, port)
@@ -46,7 +46,7 @@ def get_traffic_telnet(port, tn_connection):
         return [input_curr_bdw,input_curr_pps,output_curr_bdw,output_curr_pps,input_all_bdw,input_all_pps,output_all_bdw,output_all_pps]
     except Exception as e:
         print(e)
-        return[["0","0"],"0",["0","0"],"0",["0","0"],"0",["0","0"],"0",]
+        return[["0","bps"],"0",["0","bps"],"0",["0","bps"],"0",["0","bps"],"0",]
 
 
 def get_signal_telnet(port, tn_connection):
